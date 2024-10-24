@@ -129,26 +129,70 @@ function evaluate_rule($ast, $data) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($_POST['action'] == 'create_rule') {
         $rule_string = $_POST['rule_string'];
-        $ast = create_rule($rule_string);
-        
-        // Store the rule in the database
-        $stmt = $pdo->prepare("INSERT INTO rules (rule_string) VALUES (?)");
-        $stmt->execute([$rule_string]);
-        echo "<p>Rule created successfully!</p>";
+
+        // Validate the rule format before processing
+
+            // Call create_rule function to process the rule string
+            $ast = create_rule($rule_string);
+
+            // Store the rule in the database
+            $stmt = $pdo->prepare("INSERT INTO rules (rule_string) VALUES (?)");
+            $stmt->execute([$rule_string]);
+
+            echo "<p>Rule created successfully!</p>";
+
     } elseif ($_POST['action'] == 'evaluate_rule') {
         $data_json = $_POST['data'];
-        $data = json_decode($data_json, true);
 
-        // Retrieve rules from the database for evaluation
-        $stmt = $pdo->query("SELECT rule_string FROM rules");
-        $rules = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
-        // Combine rules
-        $combined_ast = combine_rules($rules);
-        
-        // Evaluate the combined AST against the user data
-        $result = evaluate_rule($combined_ast, $data);
-        echo "<h3>Evaluation Result: " . ($result ? "Passed" : "Failed") . "</h3>";
+        // Validate if the input is a valid JSON string
+        if (!isValidJson($data_json)) {
+            echo "<p>Invalid JSON data. Please provide valid JSON format for evaluation.</p>";
+        } else {
+            $data = json_decode($data_json, true);
+
+            // Retrieve rules from the database for evaluation
+            $stmt = $pdo->query("SELECT rule_string FROM rules");
+            $rules = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // Combine rules
+            $combined_ast = combine_rules($rules);
+
+            // Evaluate the combined AST against the user data
+            $result = evaluate_rule($combined_ast, $data);
+            echo "<h3>Evaluation Result: " . ($result ? "Passed" : "Failed") . "</h3>";
+        }
     }
 }
+
+function validateRule($rule) {
+    // Regular expression pattern for a single valid condition wrapped in parentheses
+    $validConditionPattern = '/^\(\s*([a-zA-Z_][a-zA-Z0-9_]*\s*[>=<]=?\s*(\'[^\']*\'|"[^"]*"|\d+))\s*\)$/'; // Generalized valid condition
+
+    // Validating the input rule against the pattern
+    if (preg_match($validConditionPattern, $rule)) {
+        return true; // Valid rule
+    }
+    
+    return false; // If no pattern matches, return false
+}
+
+
+
+
+
+
+
+
+// Server-side validation function for JSON data
+function isValidJson($jsonString) {
+    json_decode($jsonString);
+    
+    // Return false if the input is not valid JSON
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return false;
+    }
+    
+    return true;
+}
+
 ?>

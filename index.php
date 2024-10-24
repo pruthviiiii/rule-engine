@@ -12,7 +12,7 @@
     <h1>Rule Engine</h1>
     
     <!-- Rule creation form -->
-    <form method="post" action="api/rule_engine.php">
+    <form method="post" id="ruleForm" action="api/rule_engine.php">
         <label for="rule">Enter Rule:</label>
         <input type="text" id="rule" name="rule_string" required>
         <input type="hidden" name="action" value="create_rule">
@@ -28,7 +28,6 @@
     </form>
 
     <?php include('templates/footer.php'); ?>
-    
     <script src="/js/app.js"></script>
 </body>
 </html>
